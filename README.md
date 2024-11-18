@@ -1,0 +1,1 @@
+# training-genai-workshop-v2

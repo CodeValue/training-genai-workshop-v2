@@ -1,0 +1,73 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  background: #f0f0f0;
+}
+
+/* Center the chat container and make it wider */
+#chat-container {
+  width: 80%;
+  max-width: 800px;
+  height: 80vh; /* Occupies 80% of the viewport height */
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+
+  /* Use flex layout to keep input bar at the bottom */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#messages {
+  flex: 1; /* Make it take the remaining vertical space */
+  padding: 10px;
+  overflow-y: auto;
+}
+
+/* Chat bubbles */
+.message {
+  margin-bottom: 10px;
+  border-radius: 5px;
+  padding: 8px;
+  line-height: 1.4;
+  width: fit-content;
+  max-width: 80%;
+}
+
+.user-message {
+  background: #d1e7dd;
+  margin-left: auto;
+  text-align: right;
+}
+
+.ai-message {
+  background: #e2e3e5;
+  margin-right: auto;
+}
+
+/* Input bar at the bottom */
+#input-bar {
+  display: flex;
+  border-top: 1px solid #ccc;
+}
+
+#messageInput {
+  flex: 1;
+  border: none;
+  padding: 10px;
+  font-size: 14px;
+  outline: none;
+}
+
+#sendBtn {
+  background: #0d6efd;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 14px;
+}

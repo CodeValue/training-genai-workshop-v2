@@ -83,7 +83,7 @@ async def chat():
 
     # Save new messages to MongoDB
     recent_msgs.insert_one({'sessionId': session_id, 'role': 'user', 'content': user_input, 'timestamp': datetime.datetime.now()})
-    recent_msgs.insert_one({'sessionId': session_id, 'role': 'system', 'content': completion, 'timestamp': datetime.datetime.now()})
+    recent_msgs.insert_one({'sessionId': session_id, 'role': 'assistant', 'content': completion, 'timestamp': datetime.datetime.now()})
 
     return jsonify({'content': completion, 'sessionId': session_id})
 

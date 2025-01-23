@@ -707,3 +707,76 @@ async function createChatCompletions(messages: ChatCompletionMessageParam[], rel
 ```
 
 </details>
+
+## Step 9: Content Classification for the /data Endpoint
+In this step, you’ll classify incoming data using the OpenAI Chat Completion API before generating embeddings. By categorizing content into predefined topics or labels, you can segment data more effectively for downstream tasks such as vector search or analytics.
+
+**Tasks Accomplished:**
+- **Classification Integration:** Classify each data item during the /data endpoint processing.
+- **Contextual Guidance:** Provide an instructional system prompt to guide the model's classification approach.
+
+<details>
+<summary><strong>Python</strong></summary>
+
+```python
+```
+
+</details>
+
+<details>
+<summary><strong>TypeScript</strong></summary>
+
+```typescript
+// Function to classify content into predefined categories
+async function contentClassification(content: string): Promise<string> {
+  const response = await openAIApi.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: `
+        Classify content into predefined categories based on its textual characteristics and context.
+
+        # Steps
+        1. **Analyze the Text:** Read and understand the given content thoroughly.
+        2. **Identify Features:** Look for specific keywords, tone, subject matter, and other distinguishing features that may indicate the category.
+        3. **Evaluate Context:** Consider the context in which the content appears to understand its intended purpose or audience.
+        4. **Determine Category:** Based on the analysis and evaluation, classify the content into the most appropriate predefined categories.
+
+        # Output Format
+        Provide the classification result as an array of categories.
+        Example: ["Technology", "Science", "Health"]
+
+        # Notes
+        - Be mindful of nuanced language or ambiguous context.
+        - Some content may fit into more than one category; choose the most relevant ones based on context.
+        `,
+      },
+      {
+        role: 'user',
+        content: `Classify the following content into predefined categories: ${content}`,
+      },
+    ],
+  });
+
+  return response.choices[0].message.content ?? '[]';
+}
+```
+```typescript
+app.post('/data', async (req, res) => {
+  // Digest data content
+  const { data } = req.body as { data: { source: string; content: string }[] };
+
+  // Classify content into predefined categories
+  await Promise.all(
+    data.map(async (item) => {
+      const classification = await contentClassification(item.content);
+      console.log('------------------------------------------');
+      console.log(`Classification: ${classification}`);
+      console.log('------------------------------------------');
+    })
+  );
+....
+```
+
+</details>

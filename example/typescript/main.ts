@@ -73,6 +73,7 @@ app.post('/data', async (req, res) => {
   // Digest data content
   const { data } = req.body as { data: { source: string; content: string }[] };
 
+  // Classify content into predefined categories
   await Promise.all(
     data.map(async (item) => {
       const classification = await contentClassification(item.content);
@@ -205,6 +206,7 @@ const sendEmailTool = {
   },
 };
 
+// Function to classify content into predefined categories
 async function contentClassification(content: string): Promise<string> {
   const response = await openAIApi.chat.completions.create({
     model: 'gpt-4o-mini',

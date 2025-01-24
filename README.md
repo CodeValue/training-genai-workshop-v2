@@ -34,6 +34,9 @@ For this lab we will use [GitHub Codespaces](https://docs.github.com/en/codespac
 ## Scenario Story
 Imagine a small tech startup, Aurora Solutions, drowning in customer emails seeking partnerships and detailed product information. Their support team can’t keep up, and vital opportunities slip through the cracks. Desperate for a more efficient approach, they decide to build an AI-assisted workflow that automatically analyzes and catalogs each incoming email, stores context-rich embeddings in a vector database, and then surfaces the most relevant details on-demand through a conversational interface. With just a prompt, employees instantly get targeted information—from the latest contract offers to existing client FAQs—directly from their accumulated email knowledge base. This workshop’s code brings that futuristic scenario to life, allowing Aurora Solutions to focus on strategic tasks while the AI handles the mundane email crunch.
 
+![alt text](chat-flow.png)
+![alt text](data-indexing-flow.png)
+
 ## Step 1: Read And Run the project skeleton
 In this initial step, you will set up the project skeleton to serve as the foundation of your application. This step will help you understand the basic structure before we start building the AI-powered system.
 

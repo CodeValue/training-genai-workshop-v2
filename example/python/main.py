@@ -64,6 +64,14 @@ async def digest_content():
     req: dict[str, Any] = await request.get_json()
     data: list[dict[str, Any]] = req.get('data',[])
     
+    # Classify content into predefined categories
+    for item in data:
+        classification = content_classification(item['content'])
+        print('------------------------------------------')
+        print(f"Classification: {classification}")
+        print('------------------------------------------')
+        
+    
     # Split data into batches and generate embeddings
     BATCH_SIZE = 30
     for i in range(0, len(data), BATCH_SIZE):
@@ -133,6 +141,36 @@ def create_chat_completions(messages, relevant_context) -> str:
             return create_chat_completions([*messages, response_message, {'role': 'tool','tool_call_id': tool_call.id, 'content': tool_result}], relevant_context)
     
     completion = response.choices[0].message.content or 'failed to generate response'
+    return completion
+
+# Function to classify content into predefined categories
+def content_classification(content: str) -> str:
+    system_message = f"""
+        Classify content into predefined categories based on its textual characteristics and context.
+
+        # Steps
+        1. **Analyze the Text:** Read and understand the given content thoroughly.
+        2. **Identify Features:** Look for specific keywords, tone, subject matter, and other distinguishing features that may indicate the category.
+        3. **Evaluate Context:** Consider the context in which the content appears to understand its intended purpose or audience.
+        4. **Determine Category:** Based on the analysis and evaluation, classify the content into the most appropriate predefined categories.
+
+        # Output Format
+        Provide the classification result as an array of categories.
+        Example: ["Technology", "Science", "Health"]
+
+        # Notes
+        - Be mindful of nuanced language or ambiguous context.
+        - Some content may fit into more than one category; choose the most relevant ones based on context.
+        """
+    response = openai_api.chat.completions.create(
+        model='gpt-4o-mini',
+        messages=[
+            {'role': 'system', 'content': system_message},
+            {'role': 'user', 'content': f"Classify the following content into predefined categories: {content}"},],
+        max_tokens=150,
+        temperature=0.1
+    )
+    completion = response.choices[0].message.content or []
     return completion
 
 def send_email_tool_call(params) -> str:

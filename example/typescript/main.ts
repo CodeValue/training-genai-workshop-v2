@@ -236,6 +236,8 @@ async function contentClassification(content: string): Promise<string> {
         content: `Classify the following content into predefined categories: ${content}`,
       },
     ],
+    max_tokens: 150,
+    temperature: 0.1,
   });
 
   return response.choices[0].message.content ?? '[]';

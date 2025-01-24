@@ -16,7 +16,7 @@ This is a 90-minute workshop that consists of a series of lab exercises that tea
 By completing this workshop, you'll gain the skills needed to tackle advanced development challenges in the field of Generative AI.
 
 ### Pre-Requisites
-- Programming knowledge in Python or TypeScript / typescript.
+- Programming knowledge in Python or TypeScript.
 - GitHub Account
 - OpenAI API key
 
@@ -37,7 +37,7 @@ Imagine a small tech startup, Aurora Solutions, drowning in customer emails seek
 ## Step 1: Read And Run the project skeleton
 In this initial step, you will set up the project skeleton to serve as the foundation of your application. This step will help you understand the basic structure before we start building the AI-powered system.
 
-- Clone the repository containing the project skeleton.
+- Clone the repository containing the project skeleton or use GitHub Codespaces.
 - Install all required dependencies for either Python or TypeScript.
 - Run Docker Compose
     - The Docker Compose file is pre-configured to include MongoDB and Qdrant.
@@ -719,6 +719,51 @@ In this step, you’ll classify incoming data using the OpenAI Chat Completion A
 <summary><strong>Python</strong></summary>
 
 ```python
+# Function to classify content into predefined categories
+def content_classification(content: str) -> str:
+    system_message = f"""
+        Classify content into predefined categories based on its textual characteristics and context.
+
+        # Steps
+        1. **Analyze the Text:** Read and understand the given content thoroughly.
+        2. **Identify Features:** Look for specific keywords, tone, subject matter, and other distinguishing features that may indicate the category.
+        3. **Evaluate Context:** Consider the context in which the content appears to understand its intended purpose or audience.
+        4. **Determine Category:** Based on the analysis and evaluation, classify the content into the most appropriate predefined categories.
+
+        # Output Format
+        Provide the classification result as an array of categories.
+        Example: ["Technology", "Science", "Health"]
+
+        # Notes
+        - Be mindful of nuanced language or ambiguous context.
+        - Some content may fit into more than one category; choose the most relevant ones based on context.
+        """
+    response = openai_api.chat.completions.create(
+        model='gpt-4o-mini',
+        messages=[
+            {'role': 'system', 'content': system_message},
+            {'role': 'user', 'content': f"Classify the following content into predefined categories: {content}"},],
+        max_tokens=150,
+        temperature=0.1
+    )
+    completion = response.choices[0].message.content or []
+    return completion
+```
+
+```python
+@app.route('/data', methods=['POST'])
+async def digest_content():
+    # Digest data content
+    req: dict[str, Any] = await request.get_json()
+    data: list[dict[str, Any]] = req.get('data',[])
+    
+    # Classify content into predefined categories
+    for item in data:
+        classification = content_classification(item['content'])
+        print('------------------------------------------')
+        print(f"Classification: {classification}")
+        print('------------------------------------------')
+  ....
 ```
 
 </details>

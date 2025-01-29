@@ -137,8 +137,8 @@ In this step, you'll enhance the system prompt to make the AI tool feel more eng
   - **Output Format:** Define the expected format for the output. This can include stylistic preferences (e.g., using bullet points or specific wording) or formatting data in a user-friendly manner (e.g., JSON structures for structured responses).
 
 - Adjust completion settings (max_tokens and temperature) to optimize response quality and relevance.
-  - **max_tokens:** This sets the maximum length of the response. Here, it's capped at 150 tokens to keep responses concise.
-  - **temperature:** This controls the randomness of the response, where a higher value (up to 1.0) makes responses more varied and creative, and a lower value (towards 0) makes them more predictable. We've set it to 0.7 for a balance of coherency and creativity.
+  - **max_tokens:** This sets the maximum length of the response.
+  - **temperature:** This controls the randomness of the response, where a higher value (up to 2.0) makes responses more varied and creative, and a lower value (towards 0) makes them more predictable. We've set it to 0.7 for a balance of coherency and creativity.
 
 <details>
 <summary><strong>TypeScript</strong></summary>
@@ -171,7 +171,7 @@ messages: [
     },
     { role: 'user', content: userInput },
 ],
-max_tokens: 150,
+max_tokens: 500,
 temperature: 0.7,
 });
 ```
@@ -207,7 +207,7 @@ response = openai_api.chat.completions.create(
         {'role': 'system', 'content': system_message},
         {'role': 'user', 'content': user_input},
     ],
-    max_tokens=150,
+    max_tokens=500,
     temperature=0.7
 )
 ```
@@ -236,10 +236,12 @@ from qdrant_client import QdrantClient
 qdrant = QdrantClient(host='127.0.0.1', port=6333)
 ```
 ```python
-async def start_server():
-    collections = [collection['name'] for collection in qdrant.get_collections()]
-    if 'index' not in collections:
-        qdrant.create_collection(name='index', vectors={'size': 1536, 'distance': 'Cosine'})
+from qdrant_client.models import Distance, VectorParams
+
+index_collections = [collection.name for collection in qdrant.get_collections().collections]
+if 'index' not in index_collections:
+    qdrant.create_collection(collection_name='index', vectors_config=VectorParams(size=1536, distance=Distance.COSINE))
+
 ...
 ```
 ```python
@@ -468,13 +470,6 @@ recent_msgs.insert_one({'sessionId': session_id, 'role': 'user', 'content': user
 recent_msgs.insert_one({'sessionId': session_id, 'role': 'system', 'content': completion, 'timestamp': datetime.datetime.now()})
 
 ```
-```python
-async def start_server():
-    mongo.connect()
-
-async def stop_server():
-    mongo.close()
-```
 
 </details>
 
@@ -599,7 +594,7 @@ def create_chat_completions(messages, relevant_context) -> str:
                 {'role': 'system', 'content': system_message},
                 *messages,
             ],
-            max_tokens=150,
+            max_tokens=500,
             temperature=0.7,
             tools=[send_email_tool] # <----- Register the tool here
         )
@@ -675,7 +670,7 @@ async function createChatCompletions(messages: ChatCompletionMessageParam[], rel
       },
       ...messages,
     ],
-    max_tokens: 150,
+    max_tokens: 500,
     temperature: 0.7,
     tools: [sendEmailTool.toolDef], // <----- Register the tool here
   });
@@ -712,11 +707,13 @@ async function createChatCompletions(messages: ChatCompletionMessageParam[], rel
 </details>
 
 ## Step 9: Content Classification for the /data Endpoint
-In this step, you’ll classify incoming data using the OpenAI Chat Completion API before generating embeddings. By categorizing content into predefined topics or labels, you can segment data more effectively for downstream tasks such as vector search or analytics.
+In this step, you’ll classify incoming data using the OpenAI Chat Completion API after generating embeddings. By categorizing content into predefined topics or labels, you can segment data more effectively for downstream tasks such as vector search or analytics.
 
 **Tasks Accomplished:**
-- **Classification Integration:** Classify each data item during the /data endpoint processing.
+- **Classification Integration:** Use OpenAI completion tp classify each data item during the /data endpoint processing.
 - **Contextual Guidance:** Provide an instructional system prompt to guide the model's classification approach.
+- **Configuration:** For this task you can configure the `temperature` setting to 0.1, this will make the model more predictable.
+- **Enrich vector payload:** Add the classification to the vector payload for future retrieval.
 
 <details>
 <summary><strong>Python</strong></summary>
@@ -754,18 +751,18 @@ def content_classification(content: str) -> str:
 ```
 
 ```python
-@app.route('/data', methods=['POST'])
-async def digest_content():
-    # Digest data content
-    req: dict[str, Any] = await request.get_json()
-    data: list[dict[str, Any]] = req.get('data',[])
-    
-    # Classify content into predefined categories
-    for item in data:
-        classification = content_classification(item['content'])
-        print('------------------------------------------')
-        print(f"Classification: {classification}")
-        print('------------------------------------------')
+# Classify content into predefined categories
+classifications = [content_classification(item['content']) for item in batch]
+
+# Build document to upsert into the vector-db index
+upsert_data = [
+    {
+        'id': str(uuid.uuid4()),
+        'vector': embedding.embedding,
+        'payload': {'content': batch[idx]['content'], 'source': batch[idx]['source'], 'classifications': classifications[idx]} # <---- Add the classification to the vector payload
+    }
+    for idx, embedding in enumerate(embeddings_response.data)
+]
   ....
 ```
 
@@ -811,19 +808,15 @@ async function contentClassification(content: string): Promise<string> {
 }
 ```
 ```typescript
-app.post('/data', async (req, res) => {
-  // Digest data content
-  const { data } = req.body as { data: { source: string; content: string }[] };
+// Classify content into predefined categories
+const classifications = await Promise.all(batch.map(async (item) => await contentClassification(item.content)));
 
-  // Classify content into predefined categories
-  await Promise.all(
-    data.map(async (item) => {
-      const classification = await contentClassification(item.content);
-      console.log('------------------------------------------');
-      console.log(`Classification: ${classification}`);
-      console.log('------------------------------------------');
-    })
-  );
+// Build document to upsert into the vector-db index
+const upsertData = embeddingsResponse.data.map((embedding, index) => ({
+  id: uuidv4(),
+  vector: embedding.embedding,
+  payload: { content: batch[index].content, source: batch[index].source, classification: classifications[index] }, // <---- Add the classification to the vector payload
+}));
 ....
 ```
 

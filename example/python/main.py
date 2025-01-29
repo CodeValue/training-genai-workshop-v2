@@ -6,6 +6,7 @@ from quart_cors import cors
 from openai import OpenAI
 from pymongo import MongoClient
 from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams
 import uuid
 import os
 import datetime
@@ -18,9 +19,9 @@ openai_api = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))  # Replace with your ac
 
 qdrant = QdrantClient(host='127.0.0.1', port=6333)
 
-index_collection = qdrant.get_collection('index')
-if not index_collection:
-    qdrant.create_collection(name='index', vectors={'size': 1536, 'distance': 'Cosine'})
+index_collections = [collection.name for collection in qdrant.get_collections().collections]
+if 'index' not in index_collections:
+    qdrant.create_collection(collection_name='index', vectors_config=VectorParams(size=1536, distance=Distance.COSINE))
 
 mongo = MongoClient('mongodb://root:example@localhost:27017/')
 
@@ -64,14 +65,6 @@ async def digest_content():
     req: dict[str, Any] = await request.get_json()
     data: list[dict[str, Any]] = req.get('data',[])
     
-    # Classify content into predefined categories
-    for item in data:
-        classification = content_classification(item['content'])
-        print('------------------------------------------')
-        print(f"Classification: {classification}")
-        print('------------------------------------------')
-        
-    
     # Split data into batches and generate embeddings
     BATCH_SIZE = 30
     for i in range(0, len(data), BATCH_SIZE):
@@ -81,13 +74,16 @@ async def digest_content():
             model='text-embedding-3-small',
             input=contents,
         )
+        
+        # Classify content into predefined categories
+        classifications = [content_classification(item['content']) for item in batch]
 
         # Build document to upsert into the vector-db index
         upsert_data = [
             {
                 'id': str(uuid.uuid4()),
                 'vector': embedding.embedding,
-                'payload': {'content': batch[idx]['content'], 'source': batch[idx]['source']}
+                'payload': {'content': batch[idx]['content'], 'source': batch[idx]['source'], 'classifications': classifications[idx]}
             }
             for idx, embedding in enumerate(embeddings_response.data)
         ]
@@ -125,7 +121,7 @@ def create_chat_completions(messages, relevant_context) -> str:
             {'role': 'system', 'content': system_message},
             *messages,
         ],
-        max_tokens=150,
+        max_tokens=500,
         temperature=0.7,
         tools=[send_email_tool]
     )

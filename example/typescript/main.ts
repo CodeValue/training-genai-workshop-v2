@@ -73,16 +73,6 @@ app.post('/data', async (req, res) => {
   // Digest data content
   const { data } = req.body as { data: { source: string; content: string }[] };
 
-  // Classify content into predefined categories
-  await Promise.all(
-    data.map(async (item) => {
-      const classification = await contentClassification(item.content);
-      console.log('------------------------------------------');
-      console.log(`Classification: ${classification}`);
-      console.log('------------------------------------------');
-    })
-  );
-
   // Split data into batches and generate embeddings
   const BATCH_SIZE = 30;
   for (let i = 0; i < data.length; i += BATCH_SIZE) {
@@ -93,11 +83,14 @@ app.post('/data', async (req, res) => {
       input: contents,
     });
 
+    // Classify content into predefined categories
+    const classifications = await Promise.all(batch.map(async (item) => await contentClassification(item.content)));
+
     // Build document to upsert into the vector-db index
     const upsertData = embeddingsResponse.data.map((embedding, index) => ({
       id: uuidv4(),
       vector: embedding.embedding,
-      payload: { content: batch[index].content, source: batch[index].source },
+      payload: { content: batch[index].content, source: batch[index].source, classification: classifications[index] },
     }));
 
     // Upsert data into the vector-db index
@@ -140,7 +133,7 @@ async function createChatCompletions(messages: ChatCompletionMessageParam[], rel
       },
       ...messages,
     ],
-    max_tokens: 150,
+    max_tokens: 500,
     temperature: 0.7,
     tools: [sendEmailTool.toolDef],
   });
@@ -168,7 +161,6 @@ async function createChatCompletions(messages: ChatCompletionMessageParam[], rel
       relevantContext
     );
   }
-
   const completion = response.choices[0].message.content ?? 'failed to generate response';
   return completion;
 }

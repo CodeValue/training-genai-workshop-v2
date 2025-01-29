@@ -18,7 +18,7 @@ async def chat():
 
 @app.route('/data', methods=['POST'])
 async def digest_content():
-    # Digest email content
+    # Digest data content
     
     return '', 200
 

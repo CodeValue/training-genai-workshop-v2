@@ -27,9 +27,9 @@ mongo = MongoClient('mongodb://root:example@localhost:27017/')
 
 @app.route('/chat', methods=['POST'])
 async def chat():
-    data = await request.get_json()
-    user_input = data.get('content')
-    session_id = data.get('sessionId') or str(uuid.uuid4())  # Use provided sessionId or generate a new one
+    req: dict[str, Any] = await request.get_json()
+    user_input = req.get('content')
+    session_id = req.get('sessionId') or str(uuid.uuid4())  # Use provided sessionId or generate a new one
 
     # Generate embedding for the user input
     embeddings_response = openai_api.embeddings.create(

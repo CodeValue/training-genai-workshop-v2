@@ -1,8 +1,8 @@
 // Retrieve or create a sessionId
-let sessionId = localStorage.getItem('sessionId');
+let sessionId = sessionStorage.getItem('sessionId');
 if (!sessionId) {
   sessionId = crypto.randomUUID();
-  localStorage.setItem('sessionId', sessionId);
+  sessionStorage.setItem('sessionId', sessionId);
 }
 
 const messagesDiv = document.getElementById('messages');
@@ -28,7 +28,7 @@ async function sendMessage() {
   messageInput.value = '';
 
   try {
-    const response = await fetch('http://localhost:5000/chat', {
+    const response = await fetch('http://localhost:3000/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: userInput, sessionId })

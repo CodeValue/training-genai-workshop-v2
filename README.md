@@ -494,47 +494,6 @@ In this step, we will enhance the chat application by integrating MongoDB to sto
 - **MongoDB Integration:** Set up MongoDB to store each chat message (both user and system responses) with timestamps, enabling the application to track the conversation history accurately.
 - **Fetching Message History:** Retrieve recent chat history from MongoDB to include in the chat completion request, providing the OpenAI model with context to generate more relevant responses.
     - Ensure to limit the history to control the number of tokens sent to the model.
-<details>
-<summary><strong>Python</strong></summary>
-
-```bash
-pip install pymongo
-```
-```python
-from pymongo import MongoClient
-from datetime import datetime
-
-mongo = MongoClient('mongodb://root:example@localhost:27017/')
-```
-```python
-# Retrieve recent messages from MongoDB
-recent_msgs = mongo['chat_history']['messages']
-history_cursor = recent_msgs.find({'sessionId': session_id}).sort('timestamp', 1).limit(10)
-history = [{'role': msg['role'], 'content': msg['content']} for msg in history_cursor]
-
-system_message = f"""
-        Your Prompt
-
-        Context:
-        {relevant_context}
-        """
-response = openai_api.chat.completions.create(
-    model='gpt-4o-mini',
-    messages=[
-        {'role': 'system', 'content': system_message},
-        *history,
-        {'role': 'user', 'content': user_input},
-    ]
-)
-completion = response['choices'][0]['message']['content'] or 'failed to generate response'
-
-# Save new messages to MongoDB
-recent_msgs.insert_one({'sessionId': session_id, 'role': 'user', 'content': user_input, 'timestamp': datetime.datetime.now()})
-recent_msgs.insert_one({'sessionId': session_id, 'role': 'system', 'content': completion, 'timestamp': datetime.datetime.now()})
-
-```
-
-</details>
 
 <details>
 <summary><strong>TypeScript</strong></summary>
@@ -548,6 +507,7 @@ import { MongoClient } from 'mongodb';
 
 const mongo = new MongoClient('mongodb://root:example@localhost:27017/');
 ```
+
 ```typescript
   const recentMsgs = await mongo
     .db('chat_history')
@@ -586,6 +546,7 @@ const mongo = new MongoClient('mongodb://root:example@localhost:27017/');
     .collection('messages')
     .insertOne({ sessionId, role: 'system', content: completion, timestamp: new Date() });
 ```
+
 ```typescript
 async function startServer() {
   await mongo.connect();
@@ -596,6 +557,49 @@ async function stopServer() {
   await mongo.close();
   ...
 }
+```
+
+</details>
+
+<details>
+<summary><strong>Python</strong></summary>
+
+```bash
+pip install pymongo
+```
+
+```python
+from pymongo import MongoClient
+from datetime import datetime
+
+mongo = MongoClient('mongodb://root:example@localhost:27017/')
+```
+
+```python
+# Retrieve recent messages from MongoDB
+recent_msgs = mongo['chat_history']['messages']
+history_cursor = recent_msgs.find({'sessionId': session_id}).sort('timestamp', 1).limit(10)
+history = [{'role': msg['role'], 'content': msg['content']} for msg in history_cursor]
+
+system_message = f"""
+        Your Prompt
+
+        Context:
+        {relevant_context}
+        """
+response = openai_api.chat.completions.create(
+    model='gpt-4o-mini',
+    messages=[
+        {'role': 'system', 'content': system_message},
+        *history,
+        {'role': 'user', 'content': user_input},
+    ]
+)
+completion = response.choices[0].message.content or 'failed to generate response'
+
+# Save new messages to MongoDB
+recent_msgs.insert_one({'sessionId': session_id, 'role': 'user', 'content': user_input, 'timestamp': datetime.now()})
+recent_msgs.insert_one({'sessionId': session_id, 'role': 'system', 'content': completion, 'timestamp': datetime.now()})
 ```
 
 </details>

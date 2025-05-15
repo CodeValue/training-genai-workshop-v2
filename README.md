@@ -79,6 +79,7 @@ In this initial step, you will set up the project skeleton to serve as the found
 - Test the `/chat` endpoint to verify the server setup.
   - Use Postman or any API testing tool to send a `POST` request to `http://localhost:3000/chat` and check the response.
   - `curl -X POST http://localhost:3000/chat`
+  - `curl -X POST http://localhost:3000/chat -H "Content-Type: application/json" -d '{"content": "Tell me a programmer joke"}'`
 
 <details>
 <summary><strong>TypeScript</strong></summary>
@@ -123,7 +124,10 @@ The endpoint shall take user input, send it to OpenAI for processing, and return
 ```bash
 npm install openai
 ```
+
 ```typescript
+import OpenAI from 'openai';
+
 const openAIApi = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // Replace with your actual API key
 });
@@ -133,13 +137,13 @@ const response = await openAIApi.chat.completions.create({
     messages: [
       {
         role: 'system',
-        content: 'You are helpful and informative AI assistant.',
+        content: 'You are a helpful and informative AI assistant.',
       },
       { role: 'user', content: userInput },
     ],
   });
 
-  const completion = response.choices[0].message.content ?? 'failed to generate response';
+const completion = response.choices[0].message.content ?? 'failed to generate response';
 ```
 
 </details>
@@ -150,17 +154,21 @@ const response = await openAIApi.chat.completions.create({
 ```bash
 pip install openai
 ```
+
 ```python
+import os
+from openai import OpenAI
+
 openai_api = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))  # Replace with your actual API key
 
 response = openai_api.chat.completions.create(
     model='gpt-4o-mini',
     messages=[
-        {'role': 'system', 'content': "You are helpful and informative AI assistant."},
+        {'role': 'system', 'content': "You are a helpful and informative AI assistant."},
         {'role': 'user', 'content': user_input},
     ]
 )
-completion = response['choices'][0]['message']['content'] or 'failed to generate response'
+completion = response.choices[0].message.content or 'failed to generate response'
 ```
 
 </details>
@@ -182,12 +190,14 @@ In this step, you'll enhance the system prompt to make the AI tool feel more eng
 <summary><strong>TypeScript</strong></summary>
 
 ```typescript
+// Example context: The golden ratio is a mathematical ratio, approximately 1.618, often denoted by the Greek letter phi (φ). It is found in various aspects of art, architecture, and nature. The golden ratio is aesthetically pleasing and has been used in design for centuries. It can be expressed algebraically as (a + b) / a = a / b, where 'a' is the larger quantity and 'b' is the smaller quantity.
+
 const response = await openAIApi.chat.completions.create({
-model: 'gpt-4o-mini',
-messages: [
+  model: 'gpt-4o-mini',
+  messages: [
     {
-    role: 'system',
-    content: `
+      role: 'system',
+      content: `
         You are an advanced AI Assistant. Your primary role is to answer questions using only the information provided in the "Context" section. You do not generate any content based on external or prior knowledge outside the given context.
 
           # Guidelines
@@ -204,13 +214,13 @@ messages: [
           - Where relevant, cite or reference the exact part of the "Context" that supports your statement.
           - Where relevant Add the source of the information.
           
-          Context:
+          # Context:
         `,
     },
     { role: 'user', content: userInput },
-],
-max_tokens: 500,
-temperature: 0.7,
+  ],
+  max_tokens: 500,
+  temperature: 0.7,
 });
 ```
 
@@ -220,6 +230,8 @@ temperature: 0.7,
 <summary><strong>Python</strong></summary>
 
 ```python
+# Example context: The golden ratio is a mathematical ratio, approximately 1.618, often denoted by the Greek letter phi (φ). It is found in various aspects of art, architecture, and nature. The golden ratio is aesthetically pleasing and has been used in design for centuries. It can be expressed algebraically as (a + b) / a = a / b, where 'a' is the larger quantity and 'b' is the smaller quantity.
+
 system_message = f"""
         You are an advanced AI Assistant. Your primary role is to answer questions using only the information provided in the "Context" section. You do not generate any content based on external or prior knowledge outside the given context.
 
@@ -237,7 +249,7 @@ system_message = f"""
           - Where relevant, cite or reference the exact part of the "Context" that supports your statement.
           - Where relevant Add the source of the information.
           
-          Context:
+          # Context:
         """
 response = openai_api.chat.completions.create(
     model='gpt-4o-mini',

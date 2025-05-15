@@ -3,15 +3,20 @@ import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-
 app.post('/chat', async (req, res) => {
-  const userInput = req.body.content;
-  const sessionId = req.body.sessionId || uuidv4(); // Use provided sessionId or generate a new one
+  const userInput = req.body?.content;
+  const sessionId = req.body?.sessionId || uuidv4(); // Use provided sessionId or generate a new one
 
-  res.status(200).json({ content: userInput, sessionId });
+  if (!userInput) {
+    res.send({ content: 'Missing data' });
+    return;
+  }
+
+  res.send({ content: userInput, sessionId });
 });
 
 app.post('/data', async (req, res) => {

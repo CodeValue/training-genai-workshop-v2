@@ -11,6 +11,8 @@ app = cors(Quart(__name__), allow_origin="*")
 @app.route('/chat', methods=['POST'])
 async def chat():
     data = await request.get_json()
+    if data is None:
+        return jsonify({'content': 'Missing data'})
     user_input = data.get('content')
     session_id = data.get('sessionId') or str(uuid.uuid4())  # Use provided sessionId or generate a new one
 
@@ -23,4 +25,4 @@ async def digest_content():
     return '', 200
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=3000)

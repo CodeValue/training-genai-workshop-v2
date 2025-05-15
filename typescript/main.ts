@@ -3,9 +3,9 @@ import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
-
 
 app.post('/chat', async (req, res) => {
   const userInput = req.body.content;

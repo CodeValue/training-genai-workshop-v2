@@ -4,9 +4,11 @@
 ## Workshop Description
 
 ### What You'll Learn
+
 This is a 90-minute workshop that consists of a series of lab exercises that teach you how to build a production RAG (Retrieval Augmented Generation) based LLM application using OpenAI and Qdrant vector DB.
 
 ### Workshop Objectives
+
 - Understand the fundamentals of Generative AI technology and its applications.
 - Develop a Generative AI solution using Python or typescript.
 - Experiment with various AI prompting techniques.
@@ -15,37 +17,68 @@ This is a 90-minute workshop that consists of a series of lab exercises that tea
 
 By completing this workshop, you'll gain the skills needed to tackle advanced development challenges in the field of Generative AI.
 
-### Pre-Requisites
+### Prerequisites
+
 - Programming knowledge in Python or TypeScript.
 - GitHub Account
 - OpenAI API key
 
 ## Additional Resources
+
 For more detailed information about the APIs used in this workshop, refer to: 
 - [OpenAI Documentation](https://platform.openai.com/docs/overview)
 - [Qdrant Documentation](https://qdrant.tech/documentation/quickstart/)
 
 ## Dev Environment:
+
 For this lab we will use [GitHub Codespaces](https://docs.github.com/en/codespaces) or any IDE of your choice.
 - Click "Code" dropdown, select "Codespaces" tab
 - Click "+" to create new codespace
 - Verify you see 'Setting up your codespace' in the new tab
 
-## Scenario Story
-Imagine a small tech startup, Aurora Solutions, drowning in customer emails seeking partnerships and detailed product information. Their support team can’t keep up, and vital opportunities slip through the cracks. Desperate for a more efficient approach, they decide to build an AI-assisted workflow that automatically analyzes and catalogs each incoming email, stores context-rich embeddings in a vector database, and then surfaces the most relevant details on-demand through a conversational interface. With just a prompt, employees instantly get targeted information—from the latest contract offers to existing client FAQs—directly from their accumulated email knowledge base. This workshop’s code brings that futuristic scenario to life, allowing Aurora Solutions to focus on strategic tasks while the AI handles the mundane email crunch.
+## Use-case Scenario
+
+Imagine a small tech startup, Aurora Solutions, drowning in customer emails seeking partnerships and detailed product information. Their support team can’t keep up, and vital opportunities slip through the cracks.
+
+Desperate for a more efficient approach, they decide to build an AI-assisted workflow that automatically analyzes and catalogs each incoming email, stores context-rich embeddings in a vector database, and then surfaces the most relevant details on-demand through a conversational interface.
+With just a prompt, employees instantly get targeted information—from the latest contract offers to existing client FAQs—directly from their accumulated email knowledge base.
+
+This workshop’s project brings that futuristic scenario to life, allowing Aurora Solutions to focus on strategic tasks while the AI handles the mundane email crunch.
 
 ![alt text](chat-flow.png)
 ![alt text](data-indexing-flow.png)
 
 ## Step 1: Read And Run the project skeleton
+
 In this initial step, you will set up the project skeleton to serve as the foundation of your application. This step will help you understand the basic structure before we start building the AI-powered system.
 
 - Clone the repository containing the project skeleton or use GitHub Codespaces.
+  - `git clone https://github.com/CodeValue/training-genai-workshop-v2.git`
 - Install all required dependencies for either Python or TypeScript.
+  - TypeScript: `npm install` in the `typescript` directory.
+  - Python without `venv` in the `python` directory:
+    - `pip install -r requirements.txt`
+  - Python using `venv` in the `python` directory:
+    - `python -m venv .venv`
+    - Activate the virtual environment:
+      - Windows: `.\.venv\Scripts\activate`
+      - Windows with Git Bash: `source .venv/Scripts/activate`
+      - Windows with PowerShell:
+        - `Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force`
+        - `.\.venv\Scripts\Activate.ps1`
+      - Linux: `source .venv/bin/activate`
+    - `pip install -r requirements.txt`
+- Create `.env` files
+  - Create a `.env` file in the `typescript` and `python` directories, leave them empty for now.
 - Run Docker Compose
     - The Docker Compose file is pre-configured to include MongoDB and Qdrant.
+    - `docker compose up -d` (`-d` starts containers in detached mode)
 - Run the server to ensure everything is set up correctly.
-- Test the /chat endpoint to verify the server setup.
+  - TypeScript: `npm start` in the `typescript` directory.
+  - Python: `python main.py` in the `python` directory.
+- Test the `/chat` endpoint to verify the server setup.
+  - Use Postman or any API testing tool to send a `POST` request to `http://localhost:3000/chat` and check the response.
+  - `curl -X POST http://localhost:3000/chat`
 
 <details>
 <summary><strong>TypeScript</strong></summary>
@@ -67,13 +100,17 @@ npm start
 git clone <repository-url>
 docker-compose up -d
 cd python
+python -m venv .venv
 pip install quart quart_cors uuid dotenv
+pip install -r requirements.txt
 python main.py
 ```
 </details>
 
 ## Step 2: Integrate OpenAI Chat Completion
-In this step, you'll enhance the /chat endpoint to interact with OpenAI's ChatGPT. The endpoint will take user input, send it to OpenAI for processing, and return the AI-generated response. This integration forms the basic system for handling user queries through your application.
+
+In this step, you'll enhance the `/chat` endpoint to interact with OpenAI's ChatGPT.
+The endpoint shall take user input, send it to OpenAI for processing, and return the AI-generated response. This integration forms the basic system for handling user queries through the application.
 
 **Tasks Accomplished:**
 - Install necessary libraries for interacting with the OpenAI API.
@@ -129,6 +166,7 @@ completion = response['choices'][0]['message']['content'] or 'failed to generate
 </details>
 
 ## Step 3: Enrich System Prompt and Configure Completion Parameters
+
 In this step, you'll enhance the system prompt to make the AI tool feel more engaging and lifelike. By providing more context and personality in the system prompt, you can guide the AI to generate responses that are more aligned with the intended use case of your application. Additionally, you'll configure key completion parameters such as max_tokens and temperature to better control the output of the AI.
 
 **Tasks Accomplished:**
@@ -215,6 +253,7 @@ response = openai_api.chat.completions.create(
 </details>
 
 ## Step 5: Generate Embeddings, Vector DB
+
 This step involves implementing the /data endpoint to generate embeddings for each data using OpenAI's text-embedding-3-small model, and then index these embeddings in a Qdrant vector database. This setup enriches the RAG application by enabling efficient storage and retrieval of semantically relevant content, crucial for dynamic and context-aware responses.
 
 **Tasks Accomplished:**
@@ -336,6 +375,7 @@ app.post('/data', async (req, res) => {
 </details>
 
 ## Step 6: Retrieval of Semantically Relevant Content
+
 In this step, we will enhance the /chat endpoint in your application to incorporate semantic retrieval capabilities directly into the chat interaction. After receiving user input, the system will convert it into a vector representation using OpenAI's text-embedding-3-small model. It will then perform a vector search in the Qdrant index to find semantically relevant content. This content will be appended to the system message to provide contextually rich responses.
 
 **Tasks Accomplished:**
@@ -425,6 +465,7 @@ const response = await openAIApi.chat.completions.create({
 </details>
 
 ## Step 7: Implementing Message History Using MongoDB
+
 In this step, we will enhance the chat application by integrating MongoDB to store and retrieve the history of messages. By including recent message history in the chat completions request to OpenAI, the chatbot can generate more contextually relevant responses.
 
 **Tasks Accomplished:**
@@ -538,6 +579,7 @@ async function stopServer() {
 </details>
 
 ## Step 8: Add Tool Calling Within the LLM
+
 In this step, you’ll empower your LLM to execute specific actions (or “tools”) based on the user's request. By defining a function with a known schema (e.g., sending an email), the model can call that function through a special response structure (finish_reason === 'tool_calls'), and then incorporate the function’s output back into the conversation.
 
 **Tasks Accomplished:**
@@ -707,6 +749,7 @@ async function createChatCompletions(messages: ChatCompletionMessageParam[], rel
 </details>
 
 ## Step 9: Content Classification for the /data Endpoint
+
 In this step, you’ll classify incoming data using the OpenAI Chat Completion API after generating embeddings. By categorizing content into predefined topics or labels, you can segment data more effectively for downstream tasks such as vector search or analytics.
 
 **Tasks Accomplished:**

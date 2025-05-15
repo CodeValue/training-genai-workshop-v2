@@ -112,7 +112,7 @@ def create_chat_completions(messages, relevant_context) -> str:
           - Where relevant, cite or reference the exact part of the "Context" that supports your statement.
           - Where relevant Add the source of the information.
           
-          Context:
+          # Context:
           {relevant_context}
           """
     response = openai_api.chat.completions.create(

@@ -127,7 +127,7 @@ async function createChatCompletions(messages: ChatCompletionMessageParam[], rel
           - Where relevant, cite or reference the exact part of the "Context" that supports your statement.
           - Where relevant Add the source of the information.
           
-          Context:
+          # Context:
           ${relevantContext}
           `,
       },

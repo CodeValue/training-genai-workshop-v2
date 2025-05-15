@@ -614,6 +614,103 @@ In this step, you’ll empower your LLM to execute specific actions (or “tools
 - Parse the model's "tool_calls" output to execute the function and return the result to the conversation flow.
 
 <details>
+<summary><strong>TypeScript</strong></summary>
+
+```typescript
+import { ChatCompletionTool } from 'openai/resources';
+
+// Tool definition for sending email
+const sendEmailTool = {
+  toolDef: {
+    type: 'function',
+    function: {
+      name: 'send_email',
+      description: 'Send an email to the user',
+      parameters: {
+        type: 'object',
+        properties: {
+          to: {
+            type: 'string',
+            description: 'Email address of the recipient',
+          },
+          content: {
+            type: 'string',
+            description: 'Content of the email',
+          },
+        },
+      },
+      required: ['to', 'content'],
+      additionalProperties: false,
+    },
+    strict: true,
+  } as ChatCompletionTool,
+  toolCall: (params: { to: string; content: string }): string => {
+    console.log(`----------------------------------------------------------------`);
+    console.log(`Sending email to ${params.to} with content: ${params.content}`);
+    console.log(`----------------------------------------------------------------`);
+    return 'email sent successfully';
+  },
+};
+```
+
+```typescript
+import { ChatCompletionMessageParam } from 'openai/resources';
+
+async function createChatCompletions(messages: ChatCompletionMessageParam[], relevantContext: string): Promise<string> {
+  // Append retrieved content to the system message and generate response
+  const response = await openAIApi.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: `
+          Your Prompt...
+          
+          Context:
+          ${relevantContext}
+          `,
+      },
+      ...messages,
+    ],
+    max_tokens: 500,
+    temperature: 0.7,
+    tools: [sendEmailTool.toolDef], // <----- Register the tool here
+  });
+}
+```
+
+```typescript
+// If the model decides to call a tool
+if (response.choices[0].finish_reason === 'tool_calls') {
+  const responseMessage = response.choices[0].message;
+  const toolCall = responseMessage.tool_calls?.[0];
+  if (!toolCall) {
+    return 'failed to call tool';
+  }
+  const args = JSON.parse(toolCall.function.arguments);
+  const toolResponse = sendEmailTool.toolCall(args);
+  // Re-invoke create_chat_completions with updated conversation
+  return createChatCompletions(
+    [
+      ...messages,
+      responseMessage,
+      {
+        role: 'tool',
+        tool_call_id: toolCall.id,
+        content: toolResponse,
+      },
+    ],
+    relevantContext
+  );
+}
+
+const completion = response.choices[0].message.content ?? 'failed to generate response';
+return completion;
+```
+
+</details>
+
+<details>
 <summary><strong>Python</strong></summary>
 
 ```python
@@ -648,6 +745,7 @@ send_email_tool = {
     "strict": True
 }
 ```
+
 ```python
 def create_chat_completions(messages, relevant_context) -> str:
     system_message = f"""
@@ -656,6 +754,7 @@ def create_chat_completions(messages, relevant_context) -> str:
           Context:
           {relevant_context}
           """
+
     response = openai_api.chat.completions.create(
             model='gpt-4o-mini',
             messages=[
@@ -667,8 +766,11 @@ def create_chat_completions(messages, relevant_context) -> str:
             tools=[send_email_tool] # <----- Register the tool here
         )
 ```
+
 ```python
- # If the model decides to call a tool
+import json
+
+    # If the model decides to call a tool
     if response.choices[0].finish_reason == 'tool_calls':
         response_message = response.choices[0].message
         tool_call = response_message.tool_calls[0]
@@ -680,96 +782,6 @@ def create_chat_completions(messages, relevant_context) -> str:
     
     completion = response.choices[0].message.content or 'failed to generate response'
     return completion
-```
-
-</details>
-
-<details>
-<summary><strong>TypeScript</strong></summary>
-
-```typescript
-// Tool definition for sending email
-const sendEmailTool = {
-  toolDef: {
-    type: 'function',
-    function: {
-      name: 'send_email',
-      description: 'Send an email to the user',
-      parameters: {
-        type: 'object',
-        properties: {
-          to: {
-            type: 'string',
-            description: 'Email address of the recipient',
-          },
-          content: {
-            type: 'string',
-            description: 'Content of the email',
-          },
-        },
-      },
-      required: ['to', 'content'],
-      additionalProperties: false,
-    },
-    strict: true,
-  } as ChatCompletionTool,
-  toolCall: (params: { to: string; content: string }): string => {
-    console.log(`----------------------------------------------------------------`);
-    console.log(`Sending email to ${params.to} with content: ${params.content}`);
-    console.log(`----------------------------------------------------------------`);
-    return 'email sent successfully';
-  },
-};
-```
-```typescript
-async function createChatCompletions(messages: ChatCompletionMessageParam[], relevantContext: string): Promise<string> {
-  // Append retrieved content to the system message and generate response
-  const response = await openAIApi.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'system',
-        content: `
-          Your Prompt...
-          
-          Context:
-          ${relevantContext}
-          `,
-      },
-      ...messages,
-    ],
-    max_tokens: 500,
-    temperature: 0.7,
-    tools: [sendEmailTool.toolDef], // <----- Register the tool here
-  });
-```
-```typescript
-// If the model decides to call a tool
-  if (response.choices[0].finish_reason === 'tool_calls') {
-    const responseMessage = response.choices[0].message;
-    const toolCall = responseMessage.tool_calls?.[0];
-    if (!toolCall) {
-      return 'failed to call tool';
-    }
-    const args = JSON.parse(toolCall.function.arguments);
-    const toolResponse = sendEmailTool.toolCall(args);
-    // Re-invoke create_chat_completions with updated conversation
-    return createChatCompletions(
-      [
-        ...messages,
-        responseMessage,
-        {
-          role: 'tool',
-          tool_call_id: toolCall.id,
-          content: toolResponse,
-        },
-      ],
-      relevantContext
-    );
-  }
-
-  const completion = response.choices[0].message.content ?? 'failed to generate response';
-  return completion;
 ```
 
 </details>

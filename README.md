@@ -402,42 +402,6 @@ In this step, we will enhance the /chat endpoint in your application to incorpor
 - **Generate Vector Embeddings:** Convert user input into vector embeddings using OpenAI.
 - **Perform Vector Search:** Query the Qdrant index to find paragraphs that are semantically similar to the user input.
 - **Enhance System Response:** Append the retrieved content to the system's response, enriching the interaction with relevant information.
-<details>
-<summary><strong>Python</strong></summary>
-
-```python
-# Generate embedding for the user input
-embeddings_response = openai_api.embeddings.create(
-    model='text-embedding-3-small',
-    input=user_input,
-)
-user_embedding = embeddings_response['data'][0]['embedding']
-
-# Query vector-db index for the top 4 semantically similar content
-response = qdrant.query_points(collection_name='index', query=user_embedding, limit=4, with_payload=True)
-query_results = response.points
-relevant_context = ". ".join([
-    f"source: {result.payload.get('source')} - {result.payload.get('content')}" for result in query_results
-]) or 'No information found.'
-
-```
-```python
-# Append relevant context to the system message and generate response
-system_message = f"""
-        Your Prompt
-        Context:
-        {relevant_context}
-        """
-response = openai_api.chat.completions.create(
-    model='gpt-4o-mini',
-    messages=[
-        {'role': 'system', 'content': system_message},
-        {'role': 'user', 'content': user_input},
-    ]
-)
-```
-
-</details>
 
 <details>
 <summary><strong>TypeScript</strong></summary>
@@ -463,6 +427,7 @@ response = openai_api.chat.completions.create(
     queryResults.map((result) => `source: ${result.payload?.source}- ${result.payload?.content}`).join('. ') ??
     'No information found.';
 ```
+
 ```typescript
 // Append relevant context to the system message and generate response
 const response = await openAIApi.chat.completions.create({
@@ -480,6 +445,43 @@ const response = await openAIApi.chat.completions.create({
       { role: 'user', content: userInput },
     ],
   });
+```
+
+</details>
+
+<details>
+<summary><strong>Python</strong></summary>
+
+```python
+# Generate embedding for the user input
+embeddings_response = openai_api.embeddings.create(
+    model='text-embedding-3-small',
+    input=user_input,
+)
+user_embedding = embeddings_response.data[0].embedding
+
+# Query vector-db index for the top 4 semantically similar content
+response = qdrant.query_points(collection_name='index', query=user_embedding, limit=4, with_payload=True)
+query_results = response.points
+relevant_context = ". ".join([
+    f"source: {result.payload.get('source')} - {result.payload.get('content')}" for result in query_results
+]) or 'No information found.'
+```
+
+```python
+# Append relevant context to the system message and generate response
+system_message = f"""
+        Your Prompt
+        Context:
+        {relevant_context}
+        """
+response = openai_api.chat.completions.create(
+    model='gpt-4o-mini',
+    messages=[
+        {'role': 'system', 'content': system_message},
+        {'role': 'user', 'content': user_input},
+    ]
+)
 ```
 
 </details>

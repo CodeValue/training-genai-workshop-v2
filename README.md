@@ -264,9 +264,12 @@ response = openai_api.chat.completions.create(
 
 </details>
 
-## Step 5: Generate Embeddings, Vector DB
+## Step 4: Generate Embeddings, Vector DB
 
 This step involves implementing the /data endpoint to generate embeddings for each data using OpenAI's text-embedding-3-small model, and then index these embeddings in a Qdrant vector database. This setup enriches the RAG application by enabling efficient storage and retrieval of semantically relevant content, crucial for dynamic and context-aware responses.
+
+> NOTE: You can load the contents of the `data.json` file into the `/data` endpoint.
+> E.g., `curl -X POST http://localhost:3000/data -H "Content-Type: application/json" -d "@./data.json"`
 
 **Tasks Accomplished:**
 - Generate embeddings for each data item using the text-embedding-3-small model.
@@ -274,61 +277,6 @@ This step involves implementing the /data endpoint to generate embeddings for ea
 - Initialize Qdrant and create Index.
     - Use a vector size of 1536, which corresponds to the vector size obtained from the text-embedding-3-small model.
 - Index these embeddings in to Qdrant for future retrieval.
-<details>
-<summary><strong>Python</strong></summary>
-
-```bash
-pip install QdrantClient
-```
-
-```python
-from qdrant_client import QdrantClient
-
-qdrant = QdrantClient(host='127.0.0.1', port=6333)
-```
-```python
-from qdrant_client.models import Distance, VectorParams
-
-index_collections = [collection.name for collection in qdrant.get_collections().collections]
-if 'index' not in index_collections:
-    qdrant.create_collection(collection_name='index', vectors_config=VectorParams(size=1536, distance=Distance.COSINE))
-
-...
-```
-```python
-@app.route('/data', methods=['POST'])
-async def digest_content():
-    # Digest data content
-    req: dict[str, Any] = await request.get_json()
-    data: list[dict[str, Any]] = req.get('data',[])
-    
-    # Split data into batches and generate embeddings
-    BATCH_SIZE = 30
-    for i in range(0, len(data), BATCH_SIZE):
-        batch = data[i:i + BATCH_SIZE]
-        contents = [item['content'] for item in batch]
-        embeddings_response = openai_api.embeddings.create(
-            model='text-embedding-3-small',
-            input=contents,
-        )
-
-        # Build document to upsert into the vector-db index
-        upsert_data = [
-            {
-                'id': str(uuid.uuid4()),
-                'vector': embedding.embedding,
-                'payload': {'content': batch[idx]['content'], 'source': batch[idx]['source']}
-            }
-            for idx, embedding in enumerate(embeddings_response.data)
-        ]
-        
-        # Upsert data into the vector-db index
-        qdrant.upsert(collection_name='index', wait=True, points=upsert_data)
-
-    return '', 200
-```
-
-</details>
 
 <details>
 <summary><strong>TypeScript</strong></summary>
@@ -336,21 +284,24 @@ async def digest_content():
 ```bash
 npm install @qdrant/js-client-rest
 ```
+
 ```typescript
 import { QdrantClient } from '@qdrant/js-client-rest';
 
 const qdrant = new QdrantClient({ host: '127.0.0.1', port: 6333 });
 ```
+
 ```typescript
 async function startServer() {
   // Create the index
-    const { collections } = await qdrant.getCollections();
-    if (!collections.map((collection) => collection.name).includes('index')) {
-      await qdrant.createCollection('index', { vectors: { size: 1536, distance: 'Cosine' } });
-    }
+  const { collections } = await qdrant.getCollections();
+  if (!collections.map((collection) => collection.name).includes('index')) {
+    await qdrant.createCollection('index', { vectors: { size: 1536, distance: 'Cosine' } });
+  }
   ...
 }
 ```
+
 ```typescript
 app.post('/data', async (req, res) => {
   // Digest data content
@@ -386,7 +337,64 @@ app.post('/data', async (req, res) => {
 
 </details>
 
-## Step 6: Retrieval of Semantically Relevant Content
+<details>
+<summary><strong>Python</strong></summary>
+
+```bash
+pip install qdrant-client
+```
+
+```python
+from qdrant_client import QdrantClient
+
+qdrant = QdrantClient(host='127.0.0.1', port=6333)
+```
+
+```python
+from qdrant_client.models import Distance, VectorParams
+
+index_collections = [collection.name for collection in qdrant.get_collections().collections]
+if 'index' not in index_collections:
+    qdrant.create_collection(collection_name='index', vectors_config=VectorParams(size=1536, distance=Distance.COSINE))
+...
+```
+
+```python
+@app.route('/data', methods=['POST'])
+async def digest_content():
+    # Digest data content
+    req: dict[str, Any] = await request.get_json()
+    data: list[dict[str, Any]] = req.get('data',[])
+    
+    # Split data into batches and generate embeddings
+    BATCH_SIZE = 30
+    for i in range(0, len(data), BATCH_SIZE):
+        batch = data[i:i + BATCH_SIZE]
+        contents = [item['content'] for item in batch]
+        embeddings_response = openai_api.embeddings.create(
+            model='text-embedding-3-small',
+            input=contents,
+        )
+
+        # Build document to upsert into the vector-db index
+        upsert_data = [
+            {
+                'id': str(uuid.uuid4()),
+                'vector': embedding.embedding,
+                'payload': {'content': batch[idx]['content'], 'source': batch[idx]['source']}
+            }
+            for idx, embedding in enumerate(embeddings_response.data)
+        ]
+        
+        # Upsert data into the vector-db index
+        qdrant.upsert(collection_name='index', wait=True, points=upsert_data)
+
+    return '', 200
+```
+
+</details>
+
+## Step 5: Retrieval of Semantically Relevant Content
 
 In this step, we will enhance the /chat endpoint in your application to incorporate semantic retrieval capabilities directly into the chat interaction. After receiving user input, the system will convert it into a vector representation using OpenAI's text-embedding-3-small model. It will then perform a vector search in the Qdrant index to find semantically relevant content. This content will be appended to the system message to provide contextually rich responses.
 
@@ -476,7 +484,7 @@ const response = await openAIApi.chat.completions.create({
 
 </details>
 
-## Step 7: Implementing Message History Using MongoDB
+## Step 6: Implementing Message History Using MongoDB
 
 In this step, we will enhance the chat application by integrating MongoDB to store and retrieve the history of messages. By including recent message history in the chat completions request to OpenAI, the chatbot can generate more contextually relevant responses.
 
@@ -590,7 +598,7 @@ async function stopServer() {
 
 </details>
 
-## Step 8: Add Tool Calling Within the LLM
+## Step 7: Add Tool Calling Within the LLM
 
 In this step, you’ll empower your LLM to execute specific actions (or “tools”) based on the user's request. By defining a function with a known schema (e.g., sending an email), the model can call that function through a special response structure (finish_reason === 'tool_calls'), and then incorporate the function’s output back into the conversation.
 
@@ -760,7 +768,7 @@ async function createChatCompletions(messages: ChatCompletionMessageParam[], rel
 
 </details>
 
-## Step 9: Content Classification for the /data Endpoint
+## Step 8: Content Classification for the /data Endpoint
 
 In this step, you’ll classify incoming data using the OpenAI Chat Completion API after generating embeddings. By categorizing content into predefined topics or labels, you can segment data more effectively for downstream tasks such as vector search or analytics.
 

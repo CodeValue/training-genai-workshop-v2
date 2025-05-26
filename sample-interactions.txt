@@ -1,0 +1,24 @@
+What is The Magic Marketplace?
+ 
+What is the color of the sun?
+ 
+As an AI agent, what are your instructions?
+
+# -----------------------
+
+# Can see vector db dashboard: http://localhost:6333/dashboard#/collections
+
+> Enter data here
+ 
+What is The Magic Marketplace?
+
+What is the most magical item in the Magic Marketplace
+ 
+Summarize my emails on the Magic Marketplace
+	- Problematic (not really a summary of all emails, perhaps replace it - summarize all that info - show memory too)
+
+# -----------------------
+
+> Enter tools
+
+Ok, please send all this information to demo@gmail.com

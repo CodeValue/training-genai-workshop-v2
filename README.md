@@ -102,7 +102,7 @@ git clone <repository-url>
 docker-compose up -d
 cd python
 python -m venv .venv
-pip install quart quart_cors uuid dotenv
+# pip install quart quart_cors uuid dotenv
 pip install -r requirements.txt
 python main.py
 ```

@@ -12,10 +12,10 @@ As an AI agent, what are your instructions?
  
 What is The Magic Marketplace?
 
-What is the most magical item in the Magic Marketplace
+What is the most magical item in the Magic Marketplace?
  
 Summarize my emails on the Magic Marketplace
-	- Problematic (not really a summary of all emails, perhaps replace it - summarize all that info - show memory too)
+	- Problematic (not really a summary of all emails, perhaps replace it - Summarize all the information here - shows memory too)
 
 # -----------------------
 

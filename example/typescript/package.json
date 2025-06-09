@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "start": "tsc && node --env-file=.env dist/main.js",
-    "start:dev": "tsc -w && node --env-file=.env dist/main.js"
+    "start": "tsc && node --env-file=.env dist/main2.js",
+    "start:dev": "tsc -w && node --env-file=.env dist/main2.js"
   },
   "keywords": [],
   "author": "",
